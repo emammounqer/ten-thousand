@@ -73,4 +73,4 @@ def test_all_dice_rolls(num_dice,expected_length):
     assert len(values) == expected_length
 
     for value in values:
-        assert 1 <= value <= 6
+         assert 1 <= value <= 6
