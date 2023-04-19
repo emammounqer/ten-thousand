@@ -65,7 +65,7 @@ class GameLogic:
         return score
 
     @classmethod
-    def roll_dice(cls, num_of_dices):
+    def roll_dice(cls, num_of_dices: int) -> tuple[int, ...]:
         '''
         Simulate the rolling of multiple dice and return the results as a tuple.
 
