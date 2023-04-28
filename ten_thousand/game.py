@@ -7,8 +7,10 @@ class Game:
         self.banked_score = 0
         self.unbanked_points = 0
         self.num_dice = 6
+        self._scoring_dice: tuple[int, ...] = ()
         self._roller = roller
         self._next = lambda: None
+        self._last_roll: tuple[int, ...] = ()
 
     def start_game(self):
         print("Welcome to Ten Thousand")
@@ -32,25 +34,26 @@ class Game:
 
     def _roll_dices(self):
         dice_rolls = self._roller(self.num_dice)
-        # TODO: check for zilch
+        self._last_roll = dice_rolls
+        self._check_zilch()
         print(f"Rolling {self.num_dice} dice...")
         print(f"*** {' '.join(str(dice) for dice in dice_rolls)} ***")
         self._next = self._ask_dices_to_keep
 
     def _ask_dices_to_keep(self):
         print("Enter dice to keep, or (q)uit:")
-        user_input = input("> ")
+        user_input = self._keep_dices_input()
         if (user_input == 'q'):
             self._next = self._quit
             return
 
         dices = self._parse_dice_input(user_input)
-        # TODO: validate input and dices
         self._keep_dices(dices)
         self._next = self._ask_after_keep
 
     def _keep_dices(self, dices: tuple[int, ...]):
         self.num_dice -= len(dices)
+        self._scoring_dice = dices
         dice_score = GameLogic.calculate_score(dices)
         self.unbanked_points += dice_score
         print(f"You have {self.unbanked_points} unbanked points and {self.num_dice} dice remaining")
@@ -79,6 +82,31 @@ class Game:
 
         print(f"Thanks for playing. You earned {self.banked_score} points")
         quit()
+
+    def _check_zilch(self):
+        if (GameLogic.calculate_score(self._last_roll) == 0):
+            print("You rolled a zilch!")
+            self._new_round()
+
+    def _keep_dices_input(self):
+        user_input = input("> ")
+        while (not self._is_valid_dice_input(user_input) and not user_input == 'q'):
+            print("not valid")
+            user_input = input("> ")
+        return user_input
+
+    def _is_valid_dice_input(self, user_input: str):
+        if (not user_input.isdigit()):
+            return False
+
+        dices = self._parse_dice_input(user_input)
+        last_roll = list(self._last_roll)
+        for dice in dices:
+            if (dice not in last_roll):
+                return False
+            last_roll.remove(dice)
+
+        return True
 
     @staticmethod
     def _multiple_choice_input(*expected: str):
