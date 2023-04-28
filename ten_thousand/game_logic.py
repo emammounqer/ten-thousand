@@ -1,5 +1,6 @@
 import random
 from collections import Counter
+from typing import Iterable
 
 
 class GameLogic:
@@ -33,15 +34,11 @@ class GameLogic:
         score: int = 0
 
         # straight dices
-        is_dice_rep_one = [dice_rep == 1 for dice_rep in dice_counter.values()]
-        is_straight = len(dice_counter) == 6 and all(is_dice_rep_one)
-        if is_straight:
+        if len(dice_counter) == 6:
             return 1500
 
         # three pairs
-        is_dice_rep_tow = [dice_rep == 2 for dice_rep in dice_counter.values()]
-        is_three_pairs = len(dice_counter) == 3 and all(is_dice_rep_tow)
-        if (is_three_pairs):
+        if (len(dice_counter) == 3 and cls.all_eq_num(dice_counter.values(), 2)):
             return 1000
 
         # 3 or more of a kind
@@ -55,7 +52,7 @@ class GameLogic:
         # ones
         dice_one_rep = dice_counter.get(1)
         if (dice_one_rep is not None and dice_one_rep <= 2):
-            score += dice_counter.get(1, 0) * 100
+            score += dice_one_rep * 100
 
         # fives
         dice_five_rep = dice_counter.get(5)
@@ -65,7 +62,7 @@ class GameLogic:
         return score
 
     @classmethod
-    def roll_dice(cls, num_of_dices):
+    def roll_dice(cls, num_of_dices: int) -> tuple[int, ...]:
         '''
         Simulate the rolling of multiple dice and return the results as a tuple.
 
@@ -78,3 +75,8 @@ class GameLogic:
         outcome of one die roll.
         '''
         return tuple(random.randint(1, 6) for _ in range(num_of_dices))
+
+    @staticmethod
+    def all_eq_num(nums: Iterable[int], value: int) -> bool:
+        bool_list = [num == value for num in nums]
+        return all(bool_list)
