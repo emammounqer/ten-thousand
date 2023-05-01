@@ -8,7 +8,8 @@ class Game:
         self.unbanked_points = 0
         self.num_dice = 6
         self._roller = roller
-        self._next = lambda: None
+        self._next = None
+        self._last_roll: tuple[int, ...] = ()
 
     def start_game(self):
         print("Welcome to Ten Thousand")
@@ -27,30 +28,45 @@ class Game:
     def _new_round(self):
         self.round += 1
         self.num_dice = 6
+        self.unbanked_points = 0
         print(f"Starting round {self.round}")
         self._next = self._roll_dices
 
     def _roll_dices(self):
-        dice_rolls = self._roller(self.num_dice)
-        # TODO: check for zilch
         print(f"Rolling {self.num_dice} dice...")
-        print(f"*** {' '.join(str(dice) for dice in dice_rolls)} ***")
-        self._next = self._ask_dices_to_keep
+        self._last_roll = self._roller(self.num_dice)
+        if (self._is_zilch()):
+            self._next = self._zilch
+        else:
+            self._next = self._ask_dices_to_keep
 
     def _ask_dices_to_keep(self):
+        print(f"*** {' '.join(str(dice) for dice in self._last_roll)} ***")
         print("Enter dice to keep, or (q)uit:")
-        user_input = input("> ")
+        user_input = self._keep_dices_input()
         if (user_input == 'q'):
             self._next = self._quit
             return
+        elif (user_input == None):
+            print("Cheater!!! Or possibly made a typo...")
+            self._next = self._ask_dices_to_keep
+            return
 
         dices = self._parse_dice_input(user_input)
-        # TODO: validate input and dices
         self._keep_dices(dices)
         self._next = self._ask_after_keep
 
     def _keep_dices(self, dices: tuple[int, ...]):
-        self.num_dice -= len(dices)
+        scored_dice = GameLogic.get_scorers(self._last_roll)
+        if self.num_dice == len(dices) and len(scored_dice) == 6:  # hot dice
+            self.num_dice = 6
+        else:
+            self.num_dice -= len(dices)
+
+        if (self.num_dice == 0):
+            self._next = self._bank_points
+            return
+
         dice_score = GameLogic.calculate_score(dices)
         self.unbanked_points += dice_score
         print(f"You have {self.unbanked_points} unbanked points and {self.num_dice} dice remaining")
@@ -80,11 +96,38 @@ class Game:
         print(f"Thanks for playing. You earned {self.banked_score} points")
         quit()
 
+    def _is_zilch(self):
+        return (GameLogic.calculate_score(self._last_roll) == 0)
+
+    def _zilch(self):
+        print(f"*** {' '.join(str(dice) for dice in self._last_roll)} ***")
+        print("****************************************")
+        print("**        Zilch!!! Round over         **")
+        print("****************************************")
+        print(f"You banked 0 points in round {self.round}")
+        print(f"Total score is {self.banked_score} points")
+
+        self._next = self._new_round
+
+    def _keep_dices_input(self):
+        user_input = input("> ")
+        while (not self._is_valid_dice_input(user_input)):
+            if (user_input == 'q'):
+                return user_input
+            return None
+        return user_input
+
+    def _is_valid_dice_input(self, user_input: str):
+        if (not user_input.isdigit()):
+            return False
+        dices = self._parse_dice_input(user_input)
+        return GameLogic.validate_keepers(self._last_roll, dices)
+
     @staticmethod
     def _multiple_choice_input(*expected: str):
         user_input = input("> ")
         while (not user_input in expected):
-            print("not valid")
+            print("Cheater!!! Or possibly made a typo...")
             user_input = input("> ")
         return user_input
 

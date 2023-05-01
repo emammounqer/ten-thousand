@@ -16,7 +16,56 @@ class GameLogic:
     """
 
     @classmethod
-    def calculate_score(cls, dices_value: tuple[int, ...]):
+    def dices_score_info(cls, dices_value: tuple[int, ...]) -> tuple[int, list[int]]:
+        """
+            get info for the dices (score, dice_that_used)
+        """
+        score: int = 0
+        scored_dice: list[int] = []
+
+        # no dice
+        if (len(dices_value) == 0):
+            return (score, scored_dice)
+
+        dice_counter = Counter(dices_value)
+
+        # straight dices
+        if len(dice_counter) == 6:
+            score = 1500
+            scored_dice = list(dices_value)
+            return (score, scored_dice)
+
+        # three pairs
+        if (len(dice_counter) == 3 and cls.all_eq_num(dice_counter.values(), 2)):
+            score = 1000
+            scored_dice = list(dices_value)
+            return (score, scored_dice)
+
+        # 3 or more of a kind
+        dices = [dice for dice in dice_counter.items() if dice[1] >= 3]
+        for dice_num, dice_rep in dices:
+            if (dice_num == 1):
+                score += 1000 * 2 ** (dice_rep - 3)
+            else:
+                score += dice_num * 100 * 2 ** (dice_rep - 3)
+            scored_dice += [dice_num] * dice_rep
+
+        # ones
+        dice_one_rep = dice_counter.get(1)
+        if (dice_one_rep is not None and dice_one_rep <= 2):
+            score += dice_one_rep * 100
+            scored_dice += [1] * dice_one_rep
+
+        # fives
+        dice_five_rep = dice_counter.get(5)
+        if (dice_five_rep is not None and dice_five_rep <= 2):
+            score += dice_five_rep * 50
+            scored_dice += [5] * dice_five_rep
+
+        return (score, scored_dice)
+
+    @classmethod
+    def calculate_score(cls, dices_value: tuple[int, ...]) -> int:
         """
         calculate the score of the dices value
 
@@ -26,40 +75,43 @@ class GameLogic:
         Returns:
             int: the score of the dices value
         """
-        # no dice
-        if (len(dices_value) == 0):
-            return 0
-
-        dice_counter = Counter(dices_value)
-        score: int = 0
-
-        # straight dices
-        if len(dice_counter) == 6:
-            return 1500
-
-        # three pairs
-        if (len(dice_counter) == 3 and cls.all_eq_num(dice_counter.values(), 2)):
-            return 1000
-
-        # 3 or more of a kind
-        dices = [dice for dice in dice_counter.items() if dice[1] >= 3]
-        for dice_num, dice_rep in dices:
-            if (dice_num == 1):
-                score += 1000 * 2 ** (dice_rep - 3)
-            else:
-                score += dice_num * 100 * 2 ** (dice_rep - 3)
-
-        # ones
-        dice_one_rep = dice_counter.get(1)
-        if (dice_one_rep is not None and dice_one_rep <= 2):
-            score += dice_one_rep * 100
-
-        # fives
-        dice_five_rep = dice_counter.get(5)
-        if (dice_five_rep is not None and dice_five_rep <= 2):
-            score += dice_five_rep * 50
-
+        score = cls.dices_score_info(dices_value)[0]
         return score
+
+    @classmethod
+    def get_scorers(cls, dices_value: tuple[int, ...]) -> tuple[int, ...]:
+        """
+        get the dices that used to calculate the score
+
+        Args:
+            dices_value (tuple[int, ...]): the dices value
+
+        Returns:
+            tuple[int, ...]: the dices that used to calculate the score
+        """
+        scored_dice = cls.dices_score_info(dices_value)[1]
+        return tuple(scored_dice)
+
+    @classmethod
+    def validate_keepers(cls, roll: tuple[int, ...], keeper: tuple[int, ...]) -> bool:
+        """
+        check if the keeper is valid
+
+        Args:
+            roll (tuple[int, ...]): the roll value
+            keeper (tuple[int, ...]): the keeper value
+
+        Returns:
+            bool: True if the keeper is valid, False otherwise
+        """
+        roll_counter = Counter(roll)
+        keeper_counter = Counter(keeper)
+
+        extra_dice = keeper_counter - roll_counter
+        if (len(extra_dice) != 0):
+            return False
+
+        return True
 
     @classmethod
     def roll_dice(cls, num_of_dices: int) -> tuple[int, ...]:
