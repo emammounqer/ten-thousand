@@ -7,6 +7,7 @@ class Game:
         self.banked_score = 0
         self.unbanked_points = 0
         self.num_dice = 6
+        self.curr_round_kept_dices = []
         self._roller = roller
         self._next = None
         self._last_roll: tuple[int, ...] = ()
@@ -29,6 +30,7 @@ class Game:
         self.round += 1
         self.num_dice = 6
         self.unbanked_points = 0
+        self.curr_round_kept_dices = []
         print(f"Starting round {self.round}")
         self._next = self._roll_dices
 
@@ -54,22 +56,26 @@ class Game:
 
         dices = self._parse_dice_input(user_input)
         self._keep_dices(dices)
-        self._next = self._ask_after_keep
-
-    def _keep_dices(self, dices: tuple[int, ...]):
-        scored_dice = GameLogic.get_scorers(self._last_roll)
-        if self.num_dice == len(dices) and len(scored_dice) == 6:  # hot dice
-            self.num_dice = 6
-        else:
-            self.num_dice -= len(dices)
-
         if (self.num_dice == 0):
             self._next = self._bank_points
-            return
+        else:
+            self._next = self._ask_after_keep
 
+    def _keep_dices(self, dices: tuple[int, ...]):
+        self.num_dice -= len(dices)
+        self.curr_round_kept_dices.extend(dices)
+        self._check_hot_dice()
         dice_score = GameLogic.calculate_score(dices)
         self.unbanked_points += dice_score
         print(f"You have {self.unbanked_points} unbanked points and {self.num_dice} dice remaining")
+
+    def _check_hot_dice(self):
+        if (self.num_dice != 0):
+            return
+
+        scorer = GameLogic.get_scorers(tuple(self.curr_round_kept_dices))
+        if len(scorer) == len(self.curr_round_kept_dices):
+            self.num_dice = 6
 
     def _ask_after_keep(self):
         print("(r)oll again, (b)ank your points or (q)uit:")
@@ -85,7 +91,6 @@ class Game:
         self.banked_score += self.unbanked_points
         print(f"You banked {self.unbanked_points} points in round {self.round}")
         print(f"Total score is {self.banked_score } points")
-        self.unbanked_points = 0
         self._next = self._new_round
 
     def _quit(self):
