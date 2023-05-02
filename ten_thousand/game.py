@@ -2,8 +2,9 @@ from ten_thousand.game_logic import GameLogic
 
 
 class Game:
-    def __init__(self, roller=GameLogic.roll_dice):
+    def __init__(self, roller=GameLogic.roll_dice, num_rounds=20):
         self.round = 0
+        self.num_rounds = num_rounds
         self.banked_score = 0
         self.unbanked_points = 0
         self.num_dice = 6
@@ -12,7 +13,7 @@ class Game:
         self._next = None
         self._last_roll: tuple[int, ...] = ()
 
-    def start_game(self):
+    def play(self):
         print("Welcome to Ten Thousand")
         self._ask_to_play()
         while self._next:
@@ -27,6 +28,9 @@ class Game:
             self._next = self._quit
 
     def _new_round(self):
+        if (self.round >= self.num_rounds):
+            self._next = self._quit
+            return
         self.round += 1
         self.num_dice = 6
         self.unbanked_points = 0
@@ -141,7 +145,7 @@ class Game:
         return tuple([int(dice_str) for dice_str in dices_str])
 
 
-def play(roller=GameLogic.roll_dice):
+def play(roller=GameLogic.roll_dice, num_rounds=20):
 
-    game = Game(roller)
-    game.start_game()
+    game = Game(roller, num_rounds)
+    game.play()

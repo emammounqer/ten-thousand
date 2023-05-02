@@ -16,18 +16,18 @@ class GameLogic:
     """
 
     @classmethod
-    def dices_score_info(cls, dices_value: tuple[int, ...]) -> tuple[int, list[int]]:
+    def get_dices_info(cls, dices_value: Iterable[int]) -> tuple[int, list[int]]:
         """
             get info for the dices (score, dice_that_used)
         """
         score: int = 0
         scored_dice: list[int] = []
 
-        # no dice
-        if (len(dices_value) == 0):
-            return (score, scored_dice)
-
         dice_counter = Counter(dices_value)
+
+        # no dice
+        if (len(dice_counter) == 0):
+            return (score, scored_dice)
 
         # straight dices
         if len(dice_counter) == 6:
@@ -75,11 +75,11 @@ class GameLogic:
         Returns:
             int: the score of the dices value
         """
-        score = cls.dices_score_info(dices_value)[0]
+        score = cls.get_dices_info(dices_value)[0]
         return score
 
     @classmethod
-    def get_scorers(cls, dices_value: tuple[int, ...]) -> tuple[int, ...]:
+    def get_scorers(cls, dices_value: Iterable[int]) -> tuple[int, ...]:
         """
         get the dices that used to calculate the score
 
@@ -89,7 +89,7 @@ class GameLogic:
         Returns:
             tuple[int, ...]: the dices that used to calculate the score
         """
-        scored_dice = cls.dices_score_info(dices_value)[1]
+        scored_dice = cls.get_dices_info(dices_value)[1]
         return tuple(scored_dice)
 
     @classmethod
