@@ -8,7 +8,7 @@ class Game:
         self.banked_score = 0
         self.unbanked_points = 0
         self.num_dice = 6
-        self.curr_round_kept_dices = []
+        self.curr_round_kept_dices: list[tuple] = []
         self._roller = roller
         self._next = None
         self._last_roll: tuple[int, ...] = ()
@@ -67,19 +67,23 @@ class Game:
 
     def _keep_dices(self, dices: tuple[int, ...]):
         self.num_dice -= len(dices)
-        self.curr_round_kept_dices.extend(dices)
-        self._check_hot_dice()
+        self.curr_round_kept_dices.append(dices)
+        if (self._check_hot_dice()):
+            self.num_dice = 6
         dice_score = GameLogic.calculate_score(dices)
         self.unbanked_points += dice_score
         print(f"You have {self.unbanked_points} unbanked points and {self.num_dice} dice remaining")
 
     def _check_hot_dice(self):
         if (self.num_dice != 0):
-            return
+            return False
 
-        scorer = GameLogic.get_scorers(tuple(self.curr_round_kept_dices))
-        if len(scorer) == len(self.curr_round_kept_dices):
-            self.num_dice = 6
+        for dices in self.curr_round_kept_dices:
+            scorer = GameLogic.get_scorers(dices)
+            if len(dices) != len(scorer):
+                return False
+
+        return True
 
     def _ask_after_keep(self):
         print("(r)oll again, (b)ank your points or (q)uit:")
