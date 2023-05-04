@@ -150,7 +150,41 @@ class YourBot(BaseBot):
         return super()._enter_dice()
 
 
+class SimpleBot(BaseBot):
+    def _roll_bank_or_quit(self):
+        """your logic here"""
+        risk_weight = self._prop_of_zilch() / 100 * self.unbanked_points
+        if risk_weight > 125:
+            return "b"
+        else:
+            return "r"
+
+    def _enter_dice(self):
+        """simulate user entering which dice to keep.
+        Defaults to all scoring dice"""
+
+        return super()._enter_dice()
+
+    def _prop_of_zilch(self):
+        """Calculate the probability of getting a zilch"""
+        if (self.dice_remaining == 6):
+            return 2.31
+        elif (self.dice_remaining == 5):
+            return 7.72
+        elif (self.dice_remaining == 4):
+            return 15.74
+        elif (self.dice_remaining == 3):
+            return 27.78
+        elif (self.dice_remaining == 2):
+            return 44.44
+        elif (self.dice_remaining == 1):
+            return 66.67
+
+        return 100
+
+
 if __name__ == "__main__":
     num_games = 100
     NervousNellie.play(num_games)
     YourBot.play(num_games)
+    SimpleBot.play(num_games)
